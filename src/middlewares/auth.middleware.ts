@@ -4,7 +4,6 @@ import { config } from '../config/services.config';
 import { AuthenticatedRequest } from '../types';
 import { AppError } from './error.middleware';
 
-// Validates JWT signature (stateless - no database check)
 export const authenticateJWT = (
   req: AuthenticatedRequest,
   _res: Response,
@@ -25,14 +24,12 @@ export const authenticateJWT = (
   const token = parts[1];
 
   try {
-    // Verify JWT signature (stateless validation)
     const decoded = jwt.verify(token, config.jwt.secret) as {
       userId: string;
       email: string;
       role: string;
     };
 
-    // Attach user info to request
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
@@ -65,7 +62,6 @@ export const optionalAuth = (
   try {
     authenticateJWT(req, res, next);
   } catch (error) {
-    // If token is invalid, continue without user
     next();
   }
 };

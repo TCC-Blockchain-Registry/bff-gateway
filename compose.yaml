@@ -1,0 +1,26 @@
+services:
+  bff-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bff-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+    env_file:
+      - .env
+    networks:
+      - bff-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+networks:
+  bff-network:
+    driver: bridge

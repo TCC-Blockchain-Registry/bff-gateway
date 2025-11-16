@@ -6,14 +6,11 @@ import { LoginRequest, RegisterRequest, AuthenticatedRequest } from '../types';
 
 const router = Router();
 
-// POST /auth/login
-// Proxy para autenticação no Orchestrator
 router.post(
   '/login',
   asyncHandler(async (req: Request, res: Response) => {
     const credentials: LoginRequest = req.body;
 
-    // Validate request body
     if (!credentials.email || !credentials.password) {
       res.status(400).json({
         message: 'Email and password are required',
@@ -21,10 +18,8 @@ router.post(
       return;
     }
 
-    // Forward to Orchestrator
     const authResponse = await orchestratorService.login(credentials);
 
-    // Transform flat response to expected format { token, user }
     const transformedResponse = {
       token: authResponse.token,
       user: {
@@ -39,19 +34,15 @@ router.post(
       }
     };
 
-    // Return JWT and user info in expected format
     res.json(transformedResponse);
   })
 );
 
-// POST /auth/register
-// Proxy para registro de usuário no Orchestrator
 router.post(
   '/register',
   asyncHandler(async (req: Request, res: Response) => {
     const userData: RegisterRequest = req.body;
 
-    // Validate required fields (walletAddress is optional)
     const requiredFields = ['name', 'email', 'cpf', 'password'];
     const missingFields = requiredFields.filter((field) => !userData[field as keyof RegisterRequest]);
 
@@ -63,7 +54,6 @@ router.post(
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(userData.email)) {
       res.status(400).json({
@@ -72,7 +62,6 @@ router.post(
       return;
     }
 
-    // Basic CPF validation (11 digits)
     const cpfRegex = /^\d{11}$/;
     if (!cpfRegex.test(userData.cpf.replace(/\D/g, ''))) {
       res.status(400).json({
@@ -81,7 +70,6 @@ router.post(
       return;
     }
 
-    // Basic wallet address validation (Ethereum address format) - only if provided
     if (userData.walletAddress) {
       const walletRegex = /^0x[a-fA-F0-9]{40}$/;
       if (!walletRegex.test(userData.walletAddress)) {
@@ -92,16 +80,12 @@ router.post(
       }
     }
 
-    // Forward to Orchestrator
     const registerResponse = await orchestratorService.register(userData);
 
-    // Return success response
     res.status(201).json(registerResponse);
   })
 );
 
-// PUT /auth/wallet
-// Update user's wallet address after MetaMask connection
 router.put(
   '/wallet',
   authenticateJWT,
@@ -114,21 +98,17 @@ router.put(
       return;
     }
 
-    // Validate wallet address format
     const walletRegex = /^0x[a-fA-F0-9]{40}$/;
     if (!walletRegex.test(walletAddress)) {
       res.status(400).json({ message: 'Invalid wallet address format' });
       return;
     }
 
-    // Forward to Orchestrator
     const response = await orchestratorService.updateWallet(userId, walletAddress);
     res.json(response);
   })
 );
 
-// GET /auth/me
-// Retorna informações do usuário atual via JWT
 router.get(
   '/me',
   asyncHandler(async (req: Request, res: Response) => {
@@ -149,10 +129,6 @@ router.get(
       });
       return;
     }
-
-    // In a real implementation, you would decode the JWT here
-    // For now, we just validate that the token exists
-    // The frontend can decode the JWT itself to get user info
 
     res.json({
       message: 'Use the JWT payload to get user information',

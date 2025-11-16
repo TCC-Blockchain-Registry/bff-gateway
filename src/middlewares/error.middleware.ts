@@ -29,7 +29,6 @@ export const errorHandler = (
     return res.status(err.statusCode).json(errorResponse);
   }
 
-  // Unexpected errors
   console.error('Unexpected error:', err);
 
   const errorResponse: ApiError = {

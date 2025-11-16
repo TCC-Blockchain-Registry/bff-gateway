@@ -42,38 +42,57 @@ Port 8080            Port 3000
 - Validate user credentials (Orchestrator does this)
 - Interact with blockchain directly (Offchain API does this)
 
-## Setup
+## Prerequisites
 
-### Prerequisites
 - Node.js 18+
 - npm or yarn
 - Running Orchestrator service (port 8080)
 - Running Offchain API service (port 3000)
 
-### Installation
+## Quick Start
 
 ```bash
+# Clone repository
+git clone <repository-url>
+cd bff-gateway
+
+# Install dependencies
 npm install
-```
 
-### Configuration
-
-Copy the example environment file:
-
-```bash
+# Copy environment template
 cp .env.example .env
+# Edit .env with your configuration (see Environment Variables section)
+
+# Run in development mode
+npm run dev
 ```
 
-Edit `.env` with your configuration:
+The BFF Gateway will be available at `http://localhost:4000`
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
 
 ```env
+# Server Configuration
 PORT=4000
+NODE_ENV=development
+
+# Service URLs
 ORCHESTRATOR_URL=http://localhost:8080
 OFFCHAIN_API_URL=http://localhost:3000
-JWT_SECRET=<same-secret-as-orchestrator>
+
+# JWT Configuration (MUST match Orchestrator's secret)
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+
+# CORS Configuration
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8080
+
+# Logging
+LOG_LEVEL=info
 ```
 
-**CRITICAL:** The `JWT_SECRET` must match the secret used by the Orchestrator to generate JWTs.
+**CRITICAL:** The `JWT_SECRET` must be identical to the secret used by the Orchestrator service to generate JWTs
 
 ## Development
 
@@ -215,18 +234,79 @@ docker run -p 4000:4000 \
   bff-gateway
 ```
 
+## Health Check
+
+```bash
+curl http://localhost:4000/api/health
+```
+
+Expected response:
+```json
+{
+  "status": "healthy",
+  "services": {
+    "orchestrator": "connected",
+    "offchainApi": "connected"
+  }
+}
+```
+
 ## Troubleshooting
 
-**"Orchestrator service is unavailable"**
-- Ensure Orchestrator is running on port 8080
-- Check `ORCHESTRATOR_URL` in `.env`
+### Orchestrator Service Unavailable
 
-**"Invalid token"**
-- Ensure `JWT_SECRET` matches Orchestrator's secret
-- Check token hasn't expired (24h default)
+**Problem**: `Orchestrator service is unavailable`
 
-**"CORS error"**
+**Solution**:
+- Ensure Orchestrator is running: `curl http://localhost:8080/api/health`
+- Check `ORCHESTRATOR_URL` in `.env` matches orchestrator location
+- Verify network connectivity between services
+- Check orchestrator logs for errors
+
+### Invalid Token
+
+**Problem**: `Invalid token` or `JWT verification failed`
+
+**Solution**:
+- Ensure `JWT_SECRET` in `.env` exactly matches Orchestrator's secret
+- Check token hasn't expired (default 24h)
+- Verify token format: `Authorization: Bearer <token>`
+- Generate new token by logging in again
+
+### CORS Error
+
+**Problem**: Browser shows CORS policy error
+
+**Solution**:
 - Add frontend URL to `ALLOWED_ORIGINS` in `.env`
+- Example: `ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000`
+- Restart BFF Gateway after changing `.env`
+- Clear browser cache
+
+### Offchain API Unreachable
+
+**Problem**: Cannot connect to Offchain API
+
+**Solution**:
+- Verify Offchain API is running: `curl http://localhost:3000/health`
+- Check `OFFCHAIN_API_URL` in `.env`
+- Ensure blockchain network (Besu) is running
+
+### Port Already in Use
+
+**Problem**: `EADDRINUSE: address already in use`
+
+**Solution**:
+```bash
+# Find process using port 4000
+lsof -i :4000
+
+# Kill process
+kill -9 <PID>
+
+# Or change port in .env
+PORT=4001
+```
 
 ## Architecture Notes
 
@@ -241,3 +321,7 @@ For production deployment, consider:
 - Kubernetes deployment with multiple replicas
 - Redis for response caching (optional)
 - Rate limiting per user/IP
+
+## License
+
+MIT

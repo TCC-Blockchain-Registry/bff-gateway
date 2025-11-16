@@ -5,7 +5,6 @@ import morgan from 'morgan';
 import { config } from './config/services.config';
 import { errorHandler } from './middlewares/error.middleware';
 
-// Import routes (will be created in next tasks)
 import authRoutes from './routes/auth.routes';
 import propertyRoutes from './routes/property.routes';
 import transferRoutes from './routes/transfer.routes';
@@ -13,10 +12,8 @@ import healthRoutes from './routes/health.routes';
 
 const app: Application = express();
 
-// Security middleware
 app.use(helmet());
 
-// CORS configuration
 app.use(
   cors({
     origin: config.cors.allowedOrigins,
@@ -24,24 +21,20 @@ app.use(
   })
 );
 
-// Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging middleware
 if (config.nodeEnv === 'development') {
   app.use(morgan('dev'));
 } else {
   app.use(morgan('combined'));
 }
 
-// Routes
 app.use('/auth', authRoutes);
 app.use('/properties', propertyRoutes);
 app.use('/transfers', transferRoutes);
 app.use('/health', healthRoutes);
 
-// Welcome route
 app.get('/', (_req, res) => {
   res.json({
     service: 'BFF Gateway - Property Tokenization Platform',
@@ -56,10 +49,8 @@ app.get('/', (_req, res) => {
   });
 });
 
-// Error handling middleware (must be last)
 app.use(errorHandler);
 
-// Start server
 const PORT = config.port;
 
 app.listen(PORT, () => {
@@ -72,7 +63,6 @@ app.listen(PORT, () => {
   console.log('='.repeat(50));
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
   process.exit(0);

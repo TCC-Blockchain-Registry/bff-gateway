@@ -3,7 +3,6 @@ import { config } from '../config/services.config';
 import { AppError } from '../middlewares/error.middleware';
 import { LoginRequest, RegisterRequest, OrchestratorLoginResponse, PropertyDTO } from '../types';
 
-// HTTP client for Core Orchestrator service
 class OrchestratorService {
   private client: AxiosInstance;
 
@@ -16,22 +15,18 @@ class OrchestratorService {
       },
     });
 
-    // Response interceptor to handle errors
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response) {
-          // Server responded with error
           throw new AppError(
             error.response.data.message || 'Orchestrator service error',
             error.response.status,
             error.response.data.errors
           );
         } else if (error.request) {
-          // No response received
           throw new AppError('Orchestrator service is unavailable', 503);
         } else {
-          // Request setup error
           throw new AppError('Failed to call Orchestrator service', 500);
         }
       }

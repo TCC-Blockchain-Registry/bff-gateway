@@ -2,7 +2,6 @@ import axios, { AxiosInstance } from 'axios';
 import { config } from '../config/services.config';
 import { AppError } from '../middlewares/error.middleware';
 
-// HTTP client for Offchain API service
 class OffchainService {
   private client: AxiosInstance;
 
@@ -15,7 +14,6 @@ class OffchainService {
       },
     });
 
-    // Response interceptor to handle errors
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
