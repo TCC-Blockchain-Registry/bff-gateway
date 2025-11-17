@@ -43,13 +43,15 @@ class OrchestratorService {
     return response.data;
   }
 
-  async getUserProperties(userId: string): Promise<PropertyDTO[]> {
-    const response = await this.client.get<PropertyDTO[]>(`/api/properties/user/${userId}`);
+  async getUserProperties(userId: string, token?: string): Promise<PropertyDTO[]> {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await this.client.get<PropertyDTO[]>(`/api/properties/user/${userId}`, { headers });
     return response.data;
   }
 
-  async getPropertyMetadata(matriculaId: string): Promise<PropertyDTO> {
-    const response = await this.client.get<PropertyDTO>(`/api/properties/by-matricula/${matriculaId}`);
+  async getPropertyMetadata(matriculaId: string, token?: string): Promise<PropertyDTO> {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await this.client.get<PropertyDTO>(`/api/properties/by-matricula/${matriculaId}`, { headers });
     return response.data;
   }
 
@@ -72,8 +74,9 @@ class OrchestratorService {
     return response.data;
   }
 
-  async updateWallet(userId: string, walletAddress: string): Promise<any> {
-    const response = await this.client.put(`/api/users/${userId}/wallet`, { walletAddress });
+  async updateWallet(userId: string, walletAddress: string, token?: string): Promise<any> {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await this.client.put(`/api/users/${userId}/wallet`, { walletAddress }, { headers });
     return response.data;
   }
 

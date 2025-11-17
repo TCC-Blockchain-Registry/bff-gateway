@@ -12,8 +12,9 @@ router.get(
   authenticateJWT,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.userId;
+    const token = req.headers.authorization?.split(' ')[1];
 
-    const dbProperties = await orchestratorService.getUserProperties(userId);
+    const dbProperties = await orchestratorService.getUserProperties(userId, token);
 
     if (dbProperties.length === 0) {
       res.json([]);

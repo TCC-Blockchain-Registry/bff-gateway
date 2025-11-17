@@ -106,7 +106,8 @@ router.put(
       return;
     }
 
-    const response = await orchestratorService.updateWallet(userId, walletAddress);
+    const token = req.headers.authorization?.split(' ')[1];
+    const response = await orchestratorService.updateWallet(userId, walletAddress, token);
     res.json(response);
   })
 );

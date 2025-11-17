@@ -9,6 +9,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=4000
+      - JWT_SECRET=my-super-secret-key-for-jwt-token-generation-minimum-256-bits-long-secure-key
     env_file:
       - .env
     healthcheck:
