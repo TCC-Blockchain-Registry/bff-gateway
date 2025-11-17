@@ -11,10 +11,9 @@ router.get(
   '/my',
   authenticateJWT,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user!.userId;
-    const token = req.headers.authorization?.split(' ')[1];
+    const token = req.headers.authorization!.split(' ')[1];
 
-    const dbProperties = await orchestratorService.getUserProperties(userId, token);
+    const dbProperties = await orchestratorService.getUserProperties(token);
 
     if (dbProperties.length === 0) {
       res.json([]);
@@ -39,6 +38,7 @@ router.get(
             propertyType: dbProp.tipo,
             regularStatus: dbProp.isRegular ? "REGULAR" : "IRREGULAR",
             blockchainTxHash: dbProp.blockchainTxHash,
+            status: dbProp.status,
             createdAt: dbProp.createdAt,
             updatedAt: dbProp.updatedAt,
             blockchain: blockchainData,
@@ -55,6 +55,7 @@ router.get(
             propertyType: dbProp.tipo,
             regularStatus: dbProp.isRegular ? "REGULAR" : "IRREGULAR",
             blockchainTxHash: dbProp.blockchainTxHash,
+            status: dbProp.status,
             createdAt: dbProp.createdAt,
             updatedAt: dbProp.updatedAt,
             blockchain: null,
@@ -119,6 +120,22 @@ router.post(
       return;
     }
 
+    // 🔐 STEP 1: Garantir que o proprietário tem identidade registrada
+    console.log(`[BFF] Registrando identidade para: ${propertyData.proprietario}`);
+    try {
+      const identityResult = await offchainService.registerIdentity(propertyData.proprietario);
+      if (identityResult.alreadyRegistered) {
+        console.log(`[BFF] ✅ Identidade já estava registrada`);
+      } else {
+        console.log(`[BFF] ✅ Identidade registrada com sucesso`);
+      }
+    } catch (error: any) {
+      console.error(`[BFF] ⚠️  Falha ao registrar identidade:`, error.message);
+      // Continua mesmo se falhar, pois a identidade pode já existir
+    }
+
+    // 🏠 STEP 2: Registrar propriedade no orchestrator
+    console.log(`[BFF] Registrando propriedade ${propertyData.matriculaId}...`);
     const registerResponse = await orchestratorService.registerProperty(
       propertyData,
       authHeader.split(' ')[1]

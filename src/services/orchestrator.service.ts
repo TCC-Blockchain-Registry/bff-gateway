@@ -43,9 +43,10 @@ class OrchestratorService {
     return response.data;
   }
 
-  async getUserProperties(userId: string, token?: string): Promise<PropertyDTO[]> {
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const response = await this.client.get<PropertyDTO[]>(`/api/properties/user/${userId}`, { headers });
+  async getUserProperties(token: string): Promise<PropertyDTO[]> {
+    const response = await this.client.get<PropertyDTO[]>('/api/properties/my', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
   }
 

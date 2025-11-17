@@ -64,6 +64,7 @@ export interface PropertyDTO {
   tipo: 'URBANO' | 'RURAL' | 'LITORAL';
   isRegular?: boolean;
   blockchainTxHash?: string;
+  status?: string; // PENDING, PROCESSING, PENDING_APPROVALS, EXECUTED, FAILED
   createdAt?: string;
   updatedAt?: string;
 }

@@ -1,9 +1,11 @@
 import { Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { config } from '../config/services.config';
 import { AuthenticatedRequest } from '../types';
 import { AppError } from './error.middleware';
 
+/**
+ * BFF não valida JWT - apenas verifica se o token existe e o repassa para o Orchestrator
+ * A validação real acontece no Core Orchestrator
+ */
 export const authenticateJWT = (
   req: AuthenticatedRequest,
   _res: Response,
@@ -21,31 +23,9 @@ export const authenticateJWT = (
     throw new AppError('Invalid authorization header format. Expected: Bearer <token>', 401);
   }
 
-  const token = parts[1];
-
-  try {
-    const decoded = jwt.verify(token, config.jwt.secret) as {
-      userId: string;
-      email: string;
-      role: string;
-    };
-
-    req.user = {
-      userId: decoded.userId,
-      email: decoded.email,
-      role: decoded.role,
-    };
-
-    next();
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new AppError('Token expired', 401);
-    }
-    if (error instanceof jwt.JsonWebTokenError) {
-      throw new AppError('Invalid token', 401);
-    }
-    throw new AppError('Token validation failed', 401);
-  }
+  // Apenas garante que o header está no formato correto
+  // O Core Orchestrator fará a validação real do token
+  next();
 };
 
 export const optionalAuth = (

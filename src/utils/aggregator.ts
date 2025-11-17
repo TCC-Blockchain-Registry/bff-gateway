@@ -125,38 +125,6 @@ export function paginate<T>(
 }
 
 /**
- * Cache response (simple in-memory cache)
- * In production, use Redis
+ * CACHE REMOVIDO - Sem cache in-memory para garantir dados sempre atualizados
+ * Se necessário no futuro, usar Redis ao invés de cache in-memory
  */
-const cache = new Map<string, { data: any; timestamp: number }>();
-
-export function getCached<T>(key: string, maxAge: number = 60000): T | null {
-  const cached = cache.get(key);
-
-  if (!cached) return null;
-
-  const age = Date.now() - cached.timestamp;
-  if (age > maxAge) {
-    cache.delete(key);
-    return null;
-  }
-
-  return cached.data as T;
-}
-
-export function setCache(key: string, data: any): void {
-  cache.set(key, {
-    data,
-    timestamp: Date.now(),
-  });
-}
-
-export function clearCache(pattern?: string): void {
-  if (!pattern) {
-    cache.clear();
-    return;
-  }
-
-  const keysToDelete = Array.from(cache.keys()).filter((key) => key.includes(pattern));
-  keysToDelete.forEach((key) => cache.delete(key));
-}

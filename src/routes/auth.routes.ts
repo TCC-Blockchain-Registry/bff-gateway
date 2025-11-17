@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { orchestratorService } from '../services/orchestrator.service';
+import { offchainService } from '../services/offchain.service';
 import { asyncHandler } from '../middlewares/error.middleware';
 import { authenticateJWT } from '../middlewares/auth.middleware';
 import { LoginRequest, RegisterRequest, AuthenticatedRequest } from '../types';
@@ -106,6 +107,21 @@ router.put(
       return;
     }
 
+    // 🔐 STEP 1: Registrar identidade do wallet na blockchain
+    console.log(`[BFF] Registrando identidade para wallet: ${walletAddress}`);
+    try {
+      const identityResult = await offchainService.registerIdentity(walletAddress);
+      if (identityResult.alreadyRegistered) {
+        console.log(`[BFF] ✅ Identidade já estava registrada`);
+      } else {
+        console.log(`[BFF] ✅ Identidade registrada com sucesso`);
+      }
+    } catch (error: any) {
+      console.error(`[BFF] ⚠️  Falha ao registrar identidade:`, error.message);
+      // Continua mesmo se falhar
+    }
+
+    // 🔐 STEP 2: Atualizar wallet no orchestrator
     const token = req.headers.authorization?.split(' ')[1];
     const response = await orchestratorService.updateWallet(userId, walletAddress, token);
     res.json(response);

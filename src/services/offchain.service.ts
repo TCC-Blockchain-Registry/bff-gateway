@@ -75,6 +75,34 @@ class OffchainService {
     const response = await this.client.get('/health');
     return response.data;
   }
+
+  /**
+   * Registra identidade de um wallet no Identity Registry
+   * Se já estiver registrado, retorna success sem erro
+   */
+  async registerIdentity(walletAddress: string): Promise<{ success: boolean; alreadyRegistered?: boolean }> {
+    try {
+      const response = await this.client.post('/api/identity/register', {
+        walletAddress,
+        countryCode: 76 // Brasil
+      });
+      return response.data;
+    } catch (error: any) {
+      // Se o erro é porque já está registrado, não é um erro fatal
+      if (error.response?.data?.message?.includes('já')) {
+        return { success: true, alreadyRegistered: true };
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Verifica se um wallet tem identidade registrada
+   */
+  async verifyIdentity(walletAddress: string): Promise<{ isVerified: boolean; identityContract: string }> {
+    const response = await this.client.get(`/api/identity/${walletAddress}/verify`);
+    return response.data.data;
+  }
 }
 
 export const offchainService = new OffchainService();
