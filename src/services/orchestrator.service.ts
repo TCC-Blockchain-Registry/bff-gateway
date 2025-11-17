@@ -76,6 +76,16 @@ class OrchestratorService {
     const response = await this.client.put(`/api/users/${userId}/wallet`, { walletAddress });
     return response.data;
   }
+
+  async getAllTransfers(): Promise<any[]> {
+    const response = await this.client.get('/api/property-transfers');
+    return response.data;
+  }
+
+  async getTransfersByProperty(propertyId: string): Promise<any[]> {
+    const response = await this.client.get(`/api/property-transfers/by-property/${propertyId}`);
+    return response.data;
+  }
 }
 
 export const orchestratorService = new OrchestratorService();

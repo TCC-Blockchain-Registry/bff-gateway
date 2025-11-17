@@ -43,6 +43,7 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const userData: RegisterRequest = req.body;
 
+    // CPF is required for registration
     const requiredFields = ['name', 'email', 'cpf', 'password'];
     const missingFields = requiredFields.filter((field) => !userData[field as keyof RegisterRequest]);
 
@@ -80,6 +81,7 @@ router.post(
       }
     }
 
+    // Send CPF to orchestrator (now it supports it)
     const registerResponse = await orchestratorService.register(userData);
 
     res.status(201).json(registerResponse);

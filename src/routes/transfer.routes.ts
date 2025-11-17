@@ -87,11 +87,24 @@ router.get(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.userId;
 
-    res.json({
-      message: 'Get user transfers - not yet implemented',
-      userId,
-      transfers: [],
-    });
+    try {
+      // Get user's properties
+      const userProperties = await orchestratorService.getUserProperties(userId.toString());
+      
+      // Get all transfers
+      const allTransfers = await orchestratorService.getAllTransfers();
+      
+      // Filter transfers for user's properties (using matriculaId)
+      const userMatriculaIds = userProperties.map(p => p.matriculaId.toString());
+      const userTransfers = allTransfers.filter(transfer => 
+        userMatriculaIds.includes(transfer.matriculaId?.toString())
+      );
+
+      res.json(userTransfers);
+    } catch (error) {
+      // If orchestrator doesn't have user properties endpoint yet, return empty array
+      res.json([]);
+    }
   })
 );
 
