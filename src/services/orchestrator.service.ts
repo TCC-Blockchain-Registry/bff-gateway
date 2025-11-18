@@ -90,6 +90,20 @@ class OrchestratorService {
     const response = await this.client.get(`/api/property-transfers/by-property/${propertyId}`);
     return response.data;
   }
+
+  async getUserProfile(token: string): Promise<any> {
+    const response = await this.client.get('/api/users/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  }
+
+  async getAllProperties(token: string): Promise<PropertyDTO[]> {
+    const response = await this.client.get<PropertyDTO[]>('/api/properties', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  }
 }
 
 export const orchestratorService = new OrchestratorService();

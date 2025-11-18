@@ -103,6 +103,19 @@ class OffchainService {
     const response = await this.client.get(`/api/identity/${walletAddress}/verify`);
     return response.data.data;
   }
+
+  /**
+   * ✅ CORREÇÃO: Método auxiliar para verificar se identidade está registrada
+   * Retorna apenas um booleano
+   */
+  async isIdentityVerified(walletAddress: string): Promise<boolean> {
+    try {
+      const result = await this.verifyIdentity(walletAddress);
+      return result.isVerified;
+    } catch (error) {
+      return false;
+    }
+  }
 }
 
 export const offchainService = new OffchainService();
