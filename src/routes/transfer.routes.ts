@@ -2,14 +2,14 @@ import { Router, Response } from 'express';
 import { orchestratorService } from '../services/orchestrator.service';
 import { offchainService } from '../services/offchain.service';
 import { asyncHandler } from '../middlewares/error.middleware';
-import { authenticateJWT } from '../middlewares/auth.middleware';
+import { requireBearerToken } from '../middlewares/auth.middleware';
 import { AuthenticatedRequest, TransferStatusDTO } from '../types';
 
 const router = Router();
 
 router.post(
   '/configure',
-  authenticateJWT,
+  requireBearerToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const transferData = req.body;
     const result = await offchainService.configureTransfer(transferData);
@@ -19,7 +19,7 @@ router.post(
 
 router.post(
   '/approve',
-  authenticateJWT,
+  requireBearerToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const approvalData = req.body;
     const result = await offchainService.approveTransfer(approvalData);
@@ -29,7 +29,7 @@ router.post(
 
 router.post(
   '/accept',
-  authenticateJWT,
+  requireBearerToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const acceptData = req.body;
     const result = await offchainService.acceptTransfer(acceptData);
@@ -39,7 +39,7 @@ router.post(
 
 router.post(
   '/execute',
-  authenticateJWT,
+  requireBearerToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const executeData = req.body;
     const result = await offchainService.executeTransfer(executeData);
@@ -83,20 +83,14 @@ router.get(
 
 router.get(
   '/my',
-  authenticateJWT,
+  requireBearerToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user!.userId;
-
     try {
-      // Get user's properties
-      const userProperties = await orchestratorService.getUserProperties(userId.toString());
-      
-      // Get all transfers
+      const userProperties = await orchestratorService.getUserProperties(req.token!);
       const allTransfers = await orchestratorService.getAllTransfers();
-      
-      // Filter transfers for user's properties (using matriculaId)
+
       const userMatriculaIds = userProperties.map(p => p.matriculaId.toString());
-      const userTransfers = allTransfers.filter(transfer => 
+      const userTransfers = allTransfers.filter(transfer =>
         userMatriculaIds.includes(transfer.matriculaId?.toString())
       );
 
@@ -123,13 +117,10 @@ router.get(
 
 router.get(
   '/pending',
-  authenticateJWT,
-  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user!.userId;
-
+  requireBearerToken,
+  asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
     res.json({
       message: 'Get pending transfers - not yet implemented',
-      userId,
       pending: [],
     });
   })

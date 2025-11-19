@@ -1,7 +1,7 @@
 import { Request } from 'express';
 
-// Extend Express Request to include user from JWT
 export interface AuthenticatedRequest extends Request {
+  token?: string;
   user?: {
     userId: string;
     email: string;
@@ -35,21 +35,6 @@ export interface OrchestratorLoginResponse {
   active: boolean;
   createdAt: string;
   message: string;
-}
-
-// BFF formatted auth response (nested structure expected by frontend)
-export interface AuthResponse {
-  token: string;
-  user: {
-    id: number;
-    email: string;
-    name: string;
-    cpf: string | null;
-    walletAddress: string | null;
-    role: string;
-    active: boolean;
-    createdAt: string;
-  };
 }
 
 // Property Types

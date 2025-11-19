@@ -53,23 +53,13 @@ app.use(errorHandler);
 
 const PORT = config.port;
 
-app.listen(PORT, () => {
-  console.log('='.repeat(50));
-  console.log(`🚀 BFF Gateway started successfully`);
-  console.log(`📡 Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${config.nodeEnv}`);
-  console.log(`🔗 Orchestrator: ${config.services.orchestrator.url}`);
-  console.log(`⛓️  Offchain API: ${config.services.offchainApi.url}`);
-  console.log('='.repeat(50));
-});
+app.listen(PORT);
 
 process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
   process.exit(0);
 });
 

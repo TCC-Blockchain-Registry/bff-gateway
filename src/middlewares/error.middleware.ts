@@ -29,8 +29,6 @@ export const errorHandler = (
     return res.status(err.statusCode).json(errorResponse);
   }
 
-  console.error('Unexpected error:', err);
-
   const errorResponse: ApiError = {
     message: 'Internal server error',
     statusCode: 500,

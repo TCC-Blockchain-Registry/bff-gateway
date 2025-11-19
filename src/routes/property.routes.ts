@@ -2,18 +2,16 @@ import { Router, Response } from 'express';
 import { orchestratorService } from '../services/orchestrator.service';
 import { offchainService } from '../services/offchain.service';
 import { asyncHandler } from '../middlewares/error.middleware';
-import { authenticateJWT } from '../middlewares/auth.middleware';
+import { requireBearerToken } from '../middlewares/auth.middleware';
 import { AuthenticatedRequest, PropertyFullDTO } from '../types';
 
 const router = Router();
 
 router.get(
   '/my',
-  authenticateJWT,
+  requireBearerToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const token = req.headers.authorization!.split(' ')[1];
-
-    const dbProperties = await orchestratorService.getUserProperties(token);
+    const dbProperties = await orchestratorService.getUserProperties(req.token!);
 
     if (dbProperties.length === 0) {
       res.json([]);
@@ -104,10 +102,9 @@ router.get(
 
 router.post(
   '/register',
-  authenticateJWT,
+  requireBearerToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const propertyData = req.body;
-    const authHeader = req.headers.authorization!;
 
     const requiredFields = ['matriculaId', 'folha', 'comarca', 'endereco', 'metragem', 'proprietario', 'tipo'];
     const missingFields = requiredFields.filter((field) => !propertyData[field]);
@@ -120,25 +117,15 @@ router.post(
       return;
     }
 
-    // 🔐 STEP 1: Garantir que o proprietário tem identidade registrada
-    console.log(`[BFF] Registrando identidade para: ${propertyData.proprietario}`);
     try {
-      const identityResult = await offchainService.registerIdentity(propertyData.proprietario);
-      if (identityResult.alreadyRegistered) {
-        console.log(`[BFF] ✅ Identidade já estava registrada`);
-      } else {
-        console.log(`[BFF] ✅ Identidade registrada com sucesso`);
-      }
-    } catch (error: any) {
-      console.error(`[BFF] ⚠️  Falha ao registrar identidade:`, error.message);
-      // Continua mesmo se falhar, pois a identidade pode já existir
+      await offchainService.registerIdentity(propertyData.proprietario);
+    } catch {
+      // Continue even if identity registration fails
     }
 
-    // 🏠 STEP 2: Registrar propriedade no orchestrator
-    console.log(`[BFF] Registrando propriedade ${propertyData.matriculaId}...`);
     const registerResponse = await orchestratorService.registerProperty(
       propertyData,
-      authHeader.split(' ')[1]
+      req.token!
     );
 
     res.status(201).json(registerResponse);

@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { orchestratorService } from '../services/orchestrator.service';
 import { offchainService } from '../services/offchain.service';
 import { asyncHandler } from '../middlewares/error.middleware';
-import { authenticateJWT } from '../middlewares/auth.middleware';
+import { requireBearerToken } from '../middlewares/auth.middleware';
 import { LoginRequest, RegisterRequest, AuthenticatedRequest } from '../types';
 
 const router = Router();
@@ -44,7 +44,6 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const userData: RegisterRequest = req.body;
 
-    // CPF is required for registration
     const requiredFields = ['name', 'email', 'cpf', 'password'];
     const missingFields = requiredFields.filter((field) => !userData[field as keyof RegisterRequest]);
 
@@ -91,7 +90,7 @@ router.post(
 
 router.put(
   '/wallet',
-  authenticateJWT,
+  requireBearerToken,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { walletAddress } = req.body;
     const userId = req.user!.userId;
@@ -107,23 +106,13 @@ router.put(
       return;
     }
 
-    // 🔐 STEP 1: Registrar identidade do wallet na blockchain
-    console.log(`[BFF] Registrando identidade para wallet: ${walletAddress}`);
     try {
-      const identityResult = await offchainService.registerIdentity(walletAddress);
-      if (identityResult.alreadyRegistered) {
-        console.log(`[BFF] ✅ Identidade já estava registrada`);
-      } else {
-        console.log(`[BFF] ✅ Identidade registrada com sucesso`);
-      }
-    } catch (error: any) {
-      console.error(`[BFF] ⚠️  Falha ao registrar identidade:`, error.message);
-      // Continua mesmo se falhar
+      await offchainService.registerIdentity(walletAddress);
+    } catch {
+      // Continue even if identity registration fails
     }
 
-    // 🔐 STEP 2: Atualizar wallet no orchestrator
-    const token = req.headers.authorization?.split(' ')[1];
-    const response = await orchestratorService.updateWallet(userId, walletAddress, token);
+    const response = await orchestratorService.updateWallet(userId, walletAddress, req.token);
     res.json(response);
   })
 );

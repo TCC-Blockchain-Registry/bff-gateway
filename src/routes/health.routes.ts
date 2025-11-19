@@ -5,12 +5,6 @@ import { asyncHandler } from '../middlewares/error.middleware';
 
 const router = Router();
 
-/**
- * GET /health
- *
- * Health check endpoint for the BFF and connected services
- * Returns status of BFF, Orchestrator, and Offchain API
- */
 router.get(
   '/',
   asyncHandler(async (_req: Request, res: Response) => {
@@ -29,23 +23,20 @@ router.get(
       },
     };
 
-    // Check Orchestrator health
     try {
       await orchestratorService.healthCheck();
       health.orchestrator.status = 'healthy';
-    } catch (error) {
+    } catch {
       health.orchestrator.status = 'unhealthy';
     }
 
-    // Check Offchain API health
     try {
       await offchainService.healthCheck();
       health.offchainApi.status = 'healthy';
-    } catch (error) {
+    } catch {
       health.offchainApi.status = 'unhealthy';
     }
 
-    // Overall status
     const overallStatus =
       health.orchestrator.status === 'healthy' && health.offchainApi.status === 'healthy'
         ? 'healthy'
@@ -60,24 +51,12 @@ router.get(
   })
 );
 
-/**
- * GET /health/ready
- *
- * Readiness probe for Kubernetes/Docker
- * Returns 200 if service is ready to accept traffic
- */
 router.get('/ready', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'ready',
   });
 });
 
-/**
- * GET /health/live
- *
- * Liveness probe for Kubernetes/Docker
- * Returns 200 if service is alive (even if dependencies are down)
- */
 router.get('/live', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'alive',
