@@ -30,10 +30,10 @@ if (config.nodeEnv === 'development') {
   app.use(morgan('combined'));
 }
 
-app.use('/auth', authRoutes);
-app.use('/properties', propertyRoutes);
-app.use('/transfers', transferRoutes);
-app.use('/health', healthRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/properties', propertyRoutes);
+app.use('/api/transfers', transferRoutes);
+app.use('/api/health', healthRoutes);
 
 app.get('/', (_req, res) => {
   res.json({
@@ -41,10 +41,10 @@ app.get('/', (_req, res) => {
     version: '1.0.0',
     status: 'running',
     endpoints: {
-      auth: '/auth',
-      properties: '/properties',
-      transfers: '/transfers',
-      health: '/health',
+      auth: '/api/auth',
+      properties: '/api/properties',
+      transfers: '/api/transfers',
+      health: '/api/health',
     },
   });
 });
