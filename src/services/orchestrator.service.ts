@@ -44,7 +44,7 @@ class OrchestratorService {
   }
 
   async getUserProperties(token: string): Promise<PropertyDTO[]> {
-    const response = await this.client.get<PropertyDTO[]>('/api/properties/my', {
+    const response = await this.client.get<PropertyDTO[]>('/api/properties/my-properties', {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -100,6 +100,34 @@ class OrchestratorService {
 
   async getAllProperties(token: string): Promise<PropertyDTO[]> {
     const response = await this.client.get<PropertyDTO[]>('/api/properties', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  }
+
+  /**
+   * Initiates a property transfer
+   *
+   * Calls Orchestrator's /api/transfers/initiate endpoint which:
+   * 1. Validates JWT token and extracts authenticated user ID
+   * 2. Validates user is the property owner
+   * 3. Looks up buyer by CPF or wallet address
+   * 4. Creates transfer record in database
+   * 5. Publishes CONFIGURE_TRANSFER job to RabbitMQ
+   *
+   * @param token JWT authentication token
+   * @param data Transfer initiation data (matriculaId + buyerCpf OR buyerWalletAddress)
+   * @returns Created transfer object
+   */
+  async initiateTransfer(
+    token: string,
+    data: {
+      matriculaId: number;
+      buyerCpf?: string;
+      buyerWalletAddress?: string;
+    }
+  ): Promise<any> {
+    const response = await this.client.post('/api/transfers/initiate', data, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;

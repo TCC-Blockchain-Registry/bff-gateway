@@ -8,7 +8,7 @@ import { AuthenticatedRequest, PropertyFullDTO } from '../types';
 const router = Router();
 
 router.get(
-  '/my',
+  '/my-properties',
   authenticateJWT,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const token = req.headers.authorization!.split(' ')[1];

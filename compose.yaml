@@ -1,5 +1,6 @@
 services:
   bff-gateway:
+    image: bff-gateway
     build:
       context: .
       dockerfile: Dockerfile

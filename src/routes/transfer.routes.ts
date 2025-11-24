@@ -7,97 +7,47 @@ import { AuthenticatedRequest, TransferStatusDTO } from '../types';
 
 const router = Router();
 
+/**
+ * Initiate a property transfer
+ *
+ * ARCHITECTURAL PATTERN: BFF → Orchestrator → Queue → Worker → Offchain Consumer
+ *
+ * This endpoint:
+ * 1. Validates request
+ * 2. Forwards to Orchestrator's /api/transfers/initiate endpoint
+ * 3. Orchestrator handles all business logic (owner validation, buyer lookup, queue publishing)
+ *
+ * @deprecated The old /configure endpoint has been removed - it violated architecture by calling
+ *             Offchain Consumer directly. Use this /initiate endpoint instead.
+ */
 router.post(
-  '/configure',
+  '/initiate',
   authenticateJWT,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { matriculaId, toWalletAddress, toCpf } = req.body;
+    const { matriculaId, buyerCpf, buyerWalletAddress } = req.body;
     const token = req.headers.authorization!.split(' ')[1];
 
+    // Basic validation
     if (!matriculaId) {
       throw new AppError('matriculaId é obrigatório', 400);
     }
 
-    if (!toWalletAddress && !toCpf) {
-      throw new AppError('toWalletAddress ou toCpf é obrigatório', 400);
+    if (!buyerCpf && !buyerWalletAddress) {
+      throw new AppError('buyerCpf ou buyerWalletAddress é obrigatório', 400);
     }
 
-    // 1. Buscar propriedade pelo matriculaId
-    // Buscar todas as propriedades e filtrar pela matrícula (já que não existe endpoint específico)
-    const allProperties = await orchestratorService.getAllProperties(token);
-    const property = allProperties.find((p: any) => p.matriculaId === Number(matriculaId));
-    
-    if (!property) {
-      throw new AppError('Propriedade não encontrada', 404);
+    if (buyerCpf && buyerWalletAddress) {
+      throw new AppError('Forneça apenas buyerCpf ou buyerWalletAddress, não ambos', 400);
     }
 
-    // 2. Buscar dados do usuário logado
-    const user = await orchestratorService.getUserProfile(token);
-    
-    // 3. Verificar se o usuário é dono da propriedade (comparando wallets)
-    if (!user.walletAddress) {
-      throw new AppError('Você precisa conectar sua carteira antes de transferir propriedades', 400);
-    }
-
-    const userWallet = user.walletAddress.toLowerCase();
-    const propertyOwnerWallet = property.proprietario?.toLowerCase();
-
-    if (!propertyOwnerWallet || userWallet !== propertyOwnerWallet) {
-      throw new AppError('Você não é o proprietário desta propriedade', 403);
-    }
-
-    const from = property.proprietario;
-    let to = toWalletAddress;
-
-    // 4. Se for CPF, buscar wallet pelo CPF (TODO: implementar)
-    if (toCpf && !toWalletAddress) {
-      throw new AppError('Transferência por CPF ainda não implementada. Use wallet address.', 400);
-    }
-
-    // 5. ✅ CORREÇÃO: Garantir que identidade do destinatário está registrada
-    try {
-      console.log(`🔍 Verificando identidade do destinatário: ${to}`);
-      const isVerified = await offchainService.isIdentityVerified(to);
-      
-      if (!isVerified) {
-        console.log(`📝 Destinatário não verificado. Registrando identidade automaticamente...`);
-        await offchainService.registerIdentity(to);
-        console.log(`✅ Identidade do destinatário registrada com sucesso!`);
-      } else {
-        console.log(`✅ Destinatário já possui identidade verificada`);
-      }
-    } catch (error) {
-      console.error(`⚠️  Erro ao verificar/registrar identidade do destinatário:`, error);
-      throw new AppError('Falha ao validar destinatário. Tente novamente.', 500);
-    }
-
-    // 4. Buscar aprovadores recomendados
-    let activeApprovers: string[] = [];
-    try {
-      const approvers = await offchainService.getApprovers();
-      activeApprovers = approvers
-        .filter((a: any) => a.active)
-        .map((a: any) => a.wallet);
-    } catch (error) {
-      // Se falhar ao buscar aprovadores, usa o wallet do admin como fallback
-      console.warn('Falha ao buscar aprovadores, usando admin wallet como fallback');
-      activeApprovers = ['0x627306090abaB3A6e1400e9345bC60c78a8BEf57'];
-    }
-
-    if (activeApprovers.length === 0) {
-      // Usa wallet do admin como fallback se não houver aprovadores
-      activeApprovers = ['0x627306090abaB3A6e1400e9345bC60c78a8BEf57'];
-    }
-
-    // 5. Configurar transferência com dados completos
-    const result = await offchainService.configureTransfer({
-      from,
-      to,
+    // Proxy to Orchestrator - all business logic happens there
+    const result = await orchestratorService.initiateTransfer(token, {
       matriculaId: Number(matriculaId),
-      approvers: activeApprovers
+      buyerCpf: buyerCpf || undefined,
+      buyerWalletAddress: buyerWalletAddress || undefined
     });
 
-    res.json(result);
+    res.status(201).json(result);
   })
 );
 
